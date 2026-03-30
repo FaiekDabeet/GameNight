@@ -3083,7 +3083,32 @@ const SUPABASE_URL = 'https://gaahfidqwjxuyenhyktg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhYWhmaWRxd2p4dXllbmh5a3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4Njc2ODksImV4cCI6MjA4NzQ0MzY4OX0.GrvNYXUAIX740vJItXuYKRN5BxSS_EKAPBEAZsVuhzY';
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+// ── Auth ──
+async function signInWithGoogle() {
+  const { error } = await db.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin
+    }
+  });
+  if (error) console.error('שגיאת התחברות:', error);
+}
 
+async function signOut() {
+  await db.auth.signOut();
+  window.location.reload();
+}
+
+async function getUser() {
+  const { data: { user } } = await db.auth.getUser();
+  return user;
+}
+
+// בדיקת משתמש בטעינה
+window.addEventListener('load', async () => {
+  const user = await getUser();
+  console.log('משתמש מחובר:', user);
+});
 // ═══════════════════════════════════════════════════════
 // SPORTS — with tritone SVG color logic per sport
 // ═══════════════════════════════════════════════════════
