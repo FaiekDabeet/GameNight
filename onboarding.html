@@ -31,8 +31,10 @@
     }
     .ob-card {
       background: var(--bg);
-      border-radius: 10px;
-      box-shadow: var(--shadow);
+      border-radius: 16px;
+      box-shadow:
+        0px 0px 20px 0px rgba(37,52,63,0.25),
+        0 1px 2px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 350px;
       min-height: 500px;
@@ -44,22 +46,23 @@
     .ob-close {
       position: absolute;
       top: 7px; left: 7px;
-      width: 24px; height: 24px;
+      width: 32px; height: 32px;
       border-radius: 50%;
-      background: rgba(37,52,63,0.10);
+      background: rgba(37,52,63,0.08);
       border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      color: var(--text); font-size: 13px; font-weight: 700;
+      color: var(--text); font-size: 14px; font-weight: 700;
       transition: background 0.2s;
       z-index: 10;
     }
-    .ob-close:hover { background: rgba(37,52,63,0.18); }
+    .ob-close:hover { background: rgba(37,52,63,0.14); }
+    .ob-close:active { background: rgba(37,52,63,0.20); }
     .ob-close.hidden { display: none; }
     .ob-back {
       position: absolute;
       top: 8px; right: 8px;
       display: flex; align-items: center; gap: 4px;
-      padding: 6px 12px;
+      padding: 6px 14px;
       border-radius: 100px;
       border: 1px solid var(--border);
       background: transparent;
@@ -67,8 +70,9 @@
       font-size: 13px; font-weight: 600;
       color: var(--muted); cursor: pointer;
       transition: all 0.2s;
+      letter-spacing: 0.1px;
     }
-    .ob-back:hover { border-color: var(--orange); color: var(--orange-d); }
+    .ob-back:hover { border-color: var(--orange); color: var(--orange-d); background: rgba(255,155,81,0.05); }
     .ob-back.hidden { display: none; }
     .ob-screens { flex: 1; display: flex; flex-direction: column; }
     .ob-screen {
@@ -122,10 +126,12 @@
       color: var(--text);
       width: calc(100% - 100px);
       margin: 0 auto;
-      transition: background 0.2s, transform 0.15s;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 1px 3px 1px rgba(0,0,0,0.1);
+      position: relative; overflow: hidden;
     }
-    .btn-google:hover { background: #C8C8C8; transform: translateY(-1px); }
-    .btn-google:active { transform: scale(0.98); }
+    .btn-google:hover { background: #CECECE; box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.12); }
+    .btn-google:active { background: #C4C4C4; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
     .google-icon { width: 40px; height: 40px; flex-shrink: 0; }
     .ob-link {
       display: block; text-align: center;
@@ -172,9 +178,10 @@
       opacity: 0; transition: opacity 0.2s;
     }
     .ob-input:not(:placeholder-shown) ~ .ob-input-clear { opacity: 1; }
+    /* MD3 — state layer on hover */
     .btn-continue {
       display: flex; align-items: center; gap: 8px;
-      padding: 10px 16px;
+      padding: 10px 24px;
       border-radius: 100px;
       border: 1px solid var(--border);
       background: transparent;
@@ -184,15 +191,28 @@
       cursor: pointer;
       transition: all 0.2s;
       margin: 0 auto;
+      position: relative; overflow: hidden;
+      letter-spacing: 0.1px;
     }
+    .btn-continue::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--orange);
+      opacity: 0; border-radius: inherit;
+      transition: opacity 0.2s;
+    }
+    .btn-continue:hover::after { opacity: 0.08; }
+    .btn-continue:active::after { opacity: 0.14; }
     .btn-continue:hover { border-color: var(--orange); color: var(--orange-d); }
-    .btn-continue:disabled { opacity: 0.4; pointer-events: none; }
+    .btn-continue:disabled { opacity: 0.38; pointer-events: none; }
     .btn-continue.filled {
       background: var(--orange);
       border-color: var(--orange);
       color: white;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15);
     }
-    .btn-continue.filled:hover { background: var(--orange-d); border-color: var(--orange-d); }
+    .btn-continue.filled::after { background: white; }
+    .btn-continue.filled:hover { background: var(--orange-d); border-color: var(--orange-d); box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15); }
     .ob-actions {
       display: flex; flex-direction: column;
       align-items: center; gap: 10px;
@@ -402,7 +422,11 @@ window.addEventListener('load', async () => {
       goToScreen(3);
     }
   } else {
+    // מסך Splash — עובר אוטומטית למסך 2 אחרי 3 שניות
     goToScreen(1);
+    setTimeout(() => {
+      if (currentScreen === 1) goToScreen(2);
+    }, 3000);
   }
 });
 
