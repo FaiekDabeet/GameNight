@@ -3104,23 +3104,7 @@ async function getUser() {
   return user;
 }
 
-// בדיקת משתמש בטעינה
-window.addEventListener('load', async () => {
-  const user = await getUser();
-  console.log('משתמש מחובר:', user);
-  
-  const loginBtn = document.getElementById('loginBtn');
-  
-  if (user) {
-    // משתמש מחובר — הסתר כפתור התחברות
-    loginBtn.innerHTML = `👤 ${user.email}`;
-    loginBtn.onclick = signOut;
-  } else {
-    // משתמש לא מחובר — הצג כפתור התחברות
-    loginBtn.innerHTML = '🔑 התחבר עם Google';
-    loginBtn.onclick = signInWithGoogle;
-  }
-});
+
 // ═══════════════════════════════════════════════════════
 // SPORTS — with tritone SVG color logic per sport
 // ═══════════════════════════════════════════════════════
