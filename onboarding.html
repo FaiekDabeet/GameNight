@@ -696,43 +696,44 @@ async function init() {
   const { data: { user } } = await db.auth.getUser();
   if (user) {
     currentUser = user;
-    // בדוק אם יש כבר פרופיל
-    const { data: profile } = await db.from('players')
-      .select('id, display_name')
-      .eq('id', user.id)
-      .single()
-      .catch(() => ({ data: null }));
-
-    if (profile?.display_name) {
-      // משתמש קיים — ישר לדף הנחיתה
-      window.location.href = 'index.html';
-    } else {
-      // מחובר אבל חסר פרופיל — המשך ממסך 3
-      stopSplash();
-      goTo("player_name");
-    }
+    await checkProfileAndRoute(user);
   } else {
     startSplash();
   }
 
-  // האזן לאירועי Auth
+  // האזן לאירועי Auth (חזרה מ-OAuth)
   db.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session?.user) {
       currentUser = session.user;
-      const { data: profile } = await db.from('players')
-        .select('id, display_name')
-        .eq('id', session.user.id)
-        .single()
-        .catch(() => ({ data: null }));
-
       hideLoading();
-      if (profile?.display_name) {
-        window.location.href = 'index.html';
-      } else {
-        goTo("player_name");
-      }
+      await checkProfileAndRoute(session.user);
     }
   });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   בדיקת פרופיל וניתוב
+═══════════════════════════════════════════════════════════ */
+async function checkProfileAndRoute(user) {
+  try {
+    const { data, error } = await db.from('players')
+      .select('id, display_name')
+      .eq('id', user.id)
+      .single();
+
+    // יש פרופיל עם שם — משתמש קיים, ישר לדף הנחיתה
+    if (data && data.display_name) {
+      window.location.href = 'index.html';
+    } else {
+      // משתמש חדש — המשך לאונבורדינג ממסך 3
+      stopSplash();
+      goTo("player_name");
+    }
+  } catch (e) {
+    // שגיאה בשליפה = שורה לא קיימת = משתמש חדש
+    stopSplash();
+    goTo("player_name");
+  }
 }
 
 function applyAssets() {
