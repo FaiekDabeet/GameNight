@@ -639,14 +639,24 @@ html.light .notif-panel{ box-shadow: 0 16px 48px rgba(0,0,0,.15), 0 2px 8px rgba
   text-align: center;
   animation: scaleIn .5s var(--t-slow) both;
   box-shadow: 0 32px 80px rgba(0,0,0,.35);
-   
+   margin: 0;
+  display: flex;
+  justify-content: center; /* Horizontal centering */
+  align-items: center;     /* Vertical centering */
+  min-height: 100vh; 
 }
 .auth-sub{
   font-size: 20px; color: var(--text2);
   margin-bottom: 40px; line-height: 1.7;
   animation: fadeInUp .5s .2s both;
 }
-
+.auth-logo-wrap {
+  width: 100%;
+  text-align: center;
+}
+.auth-logo-wrap img {
+  display: inline-block; /* or inline */
+}
 .google-btn{
   display: flex; align-items: center; justify-content: center; gap: 12px;
   background: #fff; color: #3c4043;
