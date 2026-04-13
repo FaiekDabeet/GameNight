@@ -2383,179 +2383,32 @@ html.light .sp-qr-box{ box-shadow:0 2px 12px rgba(0,0,0,.1); }
 
 <!-- ════ VIEW: AUTH ════ -->
 <div class="view" id="view-auth">
-<style>
-.gn-panel{width:100%;display:none;flex-direction:column;align-items:flex-end}
-.gn-panel.active{display:flex}
-.gn-input{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(191,201,209,0.25);border-radius:10px;padding:10px 14px;color:#fff;font-family:'Assistant',sans-serif;font-size:14px;outline:none;text-align:right;box-sizing:border-box;margin-bottom:10px;direction:rtl}
-.gn-input:focus{border-color:#FF7D39}
-.gn-input::placeholder{color:rgba(191,201,209,0.45)}
-.gn-msg-box{width:100%;background:rgba(255,125,57,0.12);border:1px solid rgba(255,125,57,0.3);border-radius:12px;padding:14px 16px;font-family:'Assistant',sans-serif;font-size:13px;color:#D9D9D9;text-align:right;line-height:1.6;margin-bottom:12px;display:none}
-.gn-back{background:none;border:none;cursor:pointer;font-family:'Assistant',sans-serif;font-size:13px;color:rgba(191,201,209,0.5);display:flex;align-items:center;gap:4px;margin-bottom:14px;padding:0}
-.gn-back:hover{color:#D9D9D9}
-.gn-spinner{width:17px;height:17px;border:2px solid rgba(37,52,63,0.3);border-top-color:#25343F;border-radius:50%;animation:gnSpin .7s linear infinite;display:none}
-@keyframes gnSpin{to{transform:rotate(360deg)}}
-.gn-terms-wrap{display:flex;align-items:flex-start;gap:10px;width:100%;direction:rtl;margin-bottom:4px}
-.gn-terms-wrap input[type=checkbox]{width:16px;height:16px;margin-top:2px;accent-color:#FF7D39;cursor:pointer;flex-shrink:0}
-.gn-terms-label{font-family:'Assistant',sans-serif;font-size:12.5px;color:#BFC9D1;line-height:1.55;text-align:right;cursor:pointer}
-.gn-terms-label a{color:#FF7D39;text-decoration:underline}
-.gn-terms-err{font-family:'Assistant',sans-serif;font-size:12px;color:#FF7D39;text-align:right;width:100%;min-height:16px;margin-bottom:6px}
-</style>
+  <div class="auth-card">
+    <div class="auth-logo-wrap">
+      <svg viewBox="0 0 48 48" fill="none" width="38" height="38">
+        <path d="M24 30c-6.627 0-12-5.373-12-12V8h24v10c0 6.627-5.373 12-12 12z" fill="white" opacity=".9"/>
+        <path d="M16 31s2 7 8 7 8-7 8-7" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity=".7"/>
+        <path d="M18 38h12M20 42h8" stroke="white" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+        <path d="M12 14H6a4 4 0 010-8h6M36 14h6a4 4 0 000-8h-6" stroke="white" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+      </svg>
 
-  <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)">
-    <div style="position:relative;width:min(800px,100%);height:600px;border-radius:25px;overflow:hidden;box-shadow:inset 0 0 2px #FF7D39,0 0 7px rgba(0,0,0,0.25)">
-
-      <!-- צד שמאל — תמונה + לוגו -->
-      <div style="position:absolute;left:0;top:0;width:56.25%;height:100%;background:#BFC9D1;border-radius:25px 0 0 25px;overflow:hidden">
-        <img src="img/tj-dragotta-Gl0jBJJTDWs-unsplash.jpg" style="width:100%;height:100%;object-fit:cover;display:block" alt=""/>
-        <img src="GameNight_logo_2.png" alt="GameNight"
-          style="position:absolute;bottom:25px;left:50%;transform:translateX(-50%);width:217px;height:31px;object-fit:contain"/>
-      </div>
-
-      <!-- צד ימין -->
-      <div style="position:absolute;right:0;top:0;width:43.75%;height:100%;background:#25343F;border-radius:0 25px 25px 0;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;padding:0 28px;box-sizing:border-box;direction:rtl">
-
-        <!-- פאנל ראשי -->
-        <div class="gn-panel active" id="panel-main">
-          <div style="margin-bottom:18px">
-            <img src="logo.png" width="217" height="31" alt="GameNight" style="object-fit:contain;display:block"/>
-          </div>
-          <div style="font-family:'Assistant',sans-serif;font-weight:600;font-size:17px;line-height:1.45;text-align:right;color:#fff;width:100%;margin-bottom:10px">
-            ברוכים הבאים ל-GameNight —<br/>המקום בו הופכים ליגת<br/>חובבים, לליגת PRO!
-          </div>
-          <div style="font-family:'Assistant',sans-serif;font-size:14px;line-height:1.85;text-align:right;color:#D9D9D9;width:100%;margin-bottom:18px">
-            ✓ הרשמה מהירה<br/>
-            ✓ יצירת ליגה בקלות<br/>
-            ✓ תוצאות משחקים בזמן אמת<br/>
-            ✓ נגישה מכל מקום<br/>
-            ✓ מצב BROADCAST לתוצאות
-          </div>
-
-          <button onclick="gnHandleRegister()" style="width:266px;height:63px;background:#D9D9D9;border-radius:38px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;font-family:'Assistant',sans-serif;font-weight:600;font-size:18px;color:#25343F">
-            תרשמו אותי
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#FF7D39" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-
-          <button onclick="gnShowPanel('login')" style="background:none;border:none;cursor:pointer;font-family:'Assistant',sans-serif;font-weight:600;font-size:15px;color:#FF7D39;text-decoration:underline;text-underline-offset:3px;margin-bottom:14px">
-            אני כבר רשום
-          </button>
-
-          <div class="gn-terms-wrap">
-            <input type="checkbox" id="terms-chk"/>
-            <label class="gn-terms-label" for="terms-chk">
-              קראתי ואני מסכים/ה ל<a href="#" onclick="return false">תנאי השימוש</a> ול<a href="#" onclick="return false">מדיניות הפרטיות</a>
-            </label>
-          </div>
-          <div class="gn-terms-err" id="terms-err"></div>
-          <div style="font-family:'Assistant',sans-serif;font-weight:300;font-size:13px;color:#BFC9D1;text-align:center;width:100%;margin-top:4px">מוכנים לעלות לחימום?</div>
-        </div>
-
-        <!-- פאנל כניסה -->
-        <div class="gn-panel" id="panel-login">
-          <button class="gn-back" onclick="gnShowPanel('main')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            חזרה
-          </button>
-          <div style="font-family:'Assistant',sans-serif;font-weight:600;font-size:17px;color:#fff;width:100%;margin-bottom:14px">כניסה לחשבון</div>
-          <input class="gn-input" type="email" id="login-email" placeholder="כתובת Gmail שלך"/>
-          <div class="gn-msg-box" id="login-msg"></div>
-          <button onclick="gnHandleLoginSubmit()" style="width:266px;height:63px;background:#D9D9D9;border-radius:38px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Assistant',sans-serif;font-weight:600;font-size:18px;color:#25343F">
-            <div class="gn-spinner" id="login-spinner"></div>
-            <span id="login-btn-text">כניסה עם Google</span>
-          </button>
-        </div>
-
-        <!-- פאנל Onboarding -->
-        <div class="gn-panel" id="panel-onboarding">
-          <button class="gn-back" onclick="gnShowPanel('main')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            חזרה
-          </button>
-          <div style="font-family:'Assistant',sans-serif;font-weight:600;font-size:17px;color:#fff;width:100%;margin-bottom:6px">יאללה, מתחילים! 🏆</div>
-          <div style="font-family:'Assistant',sans-serif;font-size:13px;color:#D9D9D9;width:100%;margin-bottom:14px">רק כמה פרטים ואתם בפנים</div>
-          <input class="gn-input" type="text" id="ob-name" placeholder="שם מלא"/>
-          <input class="gn-input" type="email" id="ob-email" placeholder="כתובת Gmail"/>
-          <div id="ob-err" style="font-family:'Assistant',sans-serif;font-size:12px;color:#FF7D39;text-align:right;width:100%;min-height:18px;margin-bottom:6px"></div>
-          <button onclick="gnHandleOnboarding()" style="width:266px;height:63px;background:#D9D9D9;border-radius:38px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Assistant',sans-serif;font-weight:600;font-size:18px;color:#25343F">
-            <div class="gn-spinner" id="ob-spinner"></div>
-            <span id="ob-btn-text">הצטרפו עכשיו →</span>
-          </button>
-        </div>
-
-      </div>
+<div class="auth-logo-wrap" style="background:none; box-shadow:none; width:228px; height:33px; border-radius:0;">
+  <img src="https://raw.githubusercontent.com/FaiekDabeet/GameNight/main/GameNight_logo_2.png" width="228" height="33" alt="GameNight Logo" style="object-fit:contain"/>
+</div>
     </div>
+    <div class="auth-title">GameNight</div>
+    <div class="auth-sub">ניהול ליגות ספורט חובבניות<br/>היכנס עם חשבון Gmail כדי להתחיל</div>
+    <button class="google-btn" onclick="openGmailModal()">
+      <svg width="20" height="20" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      כניסה עם Google
+    </button>
   </div>
 </div>
-
-<script>
-function gnShowPanel(n){
-  document.querySelectorAll('.gn-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+n).classList.add('active');
-}
-function gnHandleRegister(){
-  const chk=document.getElementById('terms-chk'),err=document.getElementById('terms-err');
-  if(!chk.checked){
-    err.textContent='⚠️ יש לאשר את תנאי השימוש כדי להמשיך';
-    chk.style.outline='2px solid #FF7D39';
-    return;
-  }
-  err.textContent='';chk.style.outline='none';
-  gnShowPanel('onboarding');
-}
-function gnHandleLoginSubmit(){
-  const email=document.getElementById('login-email').value.trim().toLowerCase();
-  const msgEl=document.getElementById('login-msg');
-  const spinner=document.getElementById('login-spinner');
-  const btnText=document.getElementById('login-btn-text');
-  if(!/^[^\s@]+@gmail\.com$/i.test(email)){
-    msgEl.style.display='block';
-    msgEl.textContent='⚠️ נדרשת כתובת Gmail תקינה';
-    return;
-  }
-  spinner.style.display='block';btnText.textContent='מחפשים אותך...';msgEl.style.display='none';
-  setTimeout(()=>{
-    spinner.style.display='none';btnText.textContent='כניסה עם Google';
-    let found=false;
-    try{
-      const d=JSON.parse(localStorage.getItem('gn9_data')||'{}');
-      found=Object.values(d.leagueRoles||{}).some(r=>Object.keys(r).includes(email));
-    }catch(e){}
-    if(found){
-      msgEl.style.display='block';
-      msgEl.style.background='rgba(91,201,154,0.12)';
-      msgEl.style.borderColor='rgba(91,201,154,0.3)';
-      msgEl.textContent='✅ מצאנו אותך! מעבירים לדשבורד...';
-      setTimeout(()=>{
-        document.getElementById('gmail-input').value=email;
-        gmailLogin();
-      },1200);
-    }else{
-      msgEl.style.display='block';
-      msgEl.style.background='rgba(255,125,57,0.12)';
-      msgEl.style.borderColor='rgba(255,125,57,0.3)';
-      msgEl.textContent='חיפשנו אותך ברשימת השחקנים אך נדמה שמעולם לא נרשמת. החדשות הטובות — זה לוקח כמה דקות להצטרף 🎉';
-      document.getElementById('ob-email').value=email;
-      setTimeout(()=>gnShowPanel('onboarding'),2500);
-    }
-  },1400);
-}
-function gnHandleOnboarding(){
-  const name=document.getElementById('ob-name').value.trim();
-  const email=document.getElementById('ob-email').value.trim();
-  const err=document.getElementById('ob-err');
-  const spinner=document.getElementById('ob-spinner');
-  const btnText=document.getElementById('ob-btn-text');
-  if(!name){err.textContent='⚠️ נא להזין שם מלא';return;}
-  if(!/^[^\s@]+@gmail\.com$/i.test(email)){err.textContent='⚠️ נדרשת כתובת Gmail תקינה';return;}
-  err.textContent='';
-  spinner.style.display='block';btnText.textContent='רושמים אותך...';
-  setTimeout(()=>{
-    spinner.style.display='none';btnText.textContent='הצטרפו עכשיו →';
-    document.getElementById('gmail-input').value=email;
-    gmailLogin();
-  },1200);
-}
-</script>
-```
 
 <!-- ════ VIEW: DASHBOARD ════ -->
 <div class="view" id="view-dashboard">
