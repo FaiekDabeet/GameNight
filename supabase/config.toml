@@ -1,0 +1,12 @@
+[project]
+id = "your-project-ref"
+
+[functions.game-reminders]
+verify_jwt = false
+
+[functions.lock-inactive-leagues]
+verify_jwt = false
+
+# Cron schedules (set in Supabase Dashboard → Edge Functions → Schedules)
+# game-reminders:        "0 6 * * *"   (daily 08:00 IL = 06:00 UTC)
+# lock-inactive-leagues: "0 1 * * 0"   (every Sunday 03:00 IL = 01:00 UTC)
