@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#25343F" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GameNight" />
+
+  <!-- SEO / Open Graph -->
+  <title>GameNight — ניהול ליגות חובבים</title>
+  <meta name="description" content="צור ליגה, הזמן חברים, עקוב אחר תוצאות — לכל סוג משחק." />
+  <meta property="og:title"       content="GameNight" />
+  <meta property="og:description" content="ניהול ליגות חובבים לכל משחק" />
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://gamenight.app" />
+
+  <!-- Favicon (inline SVG data URI) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'>
+      <rect width='48' height='48' rx='12' fill='%23FF9B51'/>
+      <path d='M12 34L20 18l8 10 5-7 8 13' stroke='%2325343F' stroke-width='3'
+            stroke-linecap='round' stroke-linejoin='round' fill='none'/>
+      <circle cx='35' cy='14' r='4' fill='%2325343F'/>
+    </svg>" />
+
+  <!-- Preconnect for Google Fonts (loaded in tokens.css) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+<body>
+  <!-- App mount point -->
+  <div id="app"></div>
+
+  <!-- Toast container (injected by pages as needed) -->
+  <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- Entry -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
