@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   // Base path — change to '/gamenight/' if hosting on GitHub Pages subdirectory
-  base: '/',
+  base: '/GameNight/',
 
   build: {
     outDir: 'dist',
