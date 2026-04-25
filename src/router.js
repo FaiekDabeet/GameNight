@@ -11,6 +11,7 @@ const routes = {
   '/':              { redirect: '/login' },
   '/login':         { page: 'LoginPage',      public: true },
   '/auth/callback': { page: 'AuthCallback',   public: true },
+'/home':          { page: 'HomePage',       protected: true },
   '/leagues/create':        { page: 'CreateLeaguePage', protected: true },
   '/league/:id/games/add':  { page: 'AddGamePage',      protected: true },
   '/league/:id':    { page: 'LeaguePage',     protected: true },
@@ -70,10 +71,14 @@ export function navigate(path) {
 
 // ── Core render function ─────────────────────────────────────
 async function renderRoute(path) {
+  // Normalize trailing slash
+  if (path !== '/' && path.endsWith('/')) {
+    path = path.slice(0, -1)
+  }
+  
   const root = document.getElementById('app')
-  if (!root) return
-
-  const { config, params } = matchRoute(path)
+  ...
+}
 
   // Redirect shorthand
   if (config.redirect) {
