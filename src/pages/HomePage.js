@@ -44,19 +44,25 @@ function timeAgo(dateStr) {
 }
 
 // ── Data fetchers ────────────────────────────────────────────
+
 async function fetchFollowedLeagues(userId) {
-  const { data } = await supabase
-    .from('follows')
-    .select(`target_id, leagues!inner (
-      id, name, sport_type, cover_url, logo_url,
-      season, last_activity_at, is_locked,
-      league_members(count)
-    )`)
-    .eq('follower_id', userId)
-    .eq('target_type', 'league')
-    .order('created_at', { ascending: false })
+  const { data: follows } = await supabase
+    .from("follows")
+    .select("target_id")
+    .eq("follower_id", userId)
+    .eq("target_type", "league")
+    .order("created_at", { ascending: false })
     .limit(12)
-  return (data || []).map(r => r.leagues).filter(Boolean)
+
+  if (!follows?.length) return []
+  const ids = follows.map(f => f.target_id)
+
+  const { data } = await supabase
+    .from("leagues")
+    .select("id, name, sport_type, cover_url, logo_url, season, last_activity_at, is_locked, league_members(count)")
+    .in("id", ids)
+
+  return data || []
 }
 
 async function fetchManagedLeagues(userId) {
