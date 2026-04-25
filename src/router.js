@@ -8,7 +8,7 @@ import { isAuthenticated, onAuthStateChange } from './lib/auth.js'
 // protected: true → redirects to /login if not authenticated
 // public:    true → redirects to /home if already authenticated
 const routes = {
-  '/':              { redirect: '/home' },
+  '/':              { redirect: '/login' },
   '/login':         { page: 'LoginPage',      public: true },
   '/auth/callback': { page: 'AuthCallback',   public: true },
   '/leagues/create':        { page: 'CreateLeaguePage', protected: true },
