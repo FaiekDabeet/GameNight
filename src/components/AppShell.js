@@ -114,21 +114,24 @@ export class AppShell {
 
   // ── Subscribe to realtime notifications ─────────────────
   _subscribeNotifications() {
-    if (!this.user?.id) return
-    const channel = supabase
-      .channel(`notif:${this.user.id}`)
-      .on('postgres_changes', {
-        event:  'INSERT',
-        schema: 'public',
-        table:  'notifications',
-        filter: `user_id=eq.${this.user.id}`,
-      }, () => {
-        this.unreadCount++
-        this._updateNotifBadge()
-      })
-      .subscribe()
-    this._unsubNotif = () => supabase.removeChannel(channel)
-  }
+  if (!this.user?.id) return
+  
+  // יצירת channel חדש בכל פעם
+  const channel = supabase
+    .channel(`notifications:${this.user.id}:${Date.now()}`)
+    .on('postgres_changes', {
+      event:  'INSERT',
+      schema: 'public',
+      table:  'notifications',
+      filter: `user_id=eq.${this.user.id}`,
+    }, () => {
+      this.unreadCount++
+      this._updateNotifBadge()
+    })
+
+  channel.subscribe()
+  this._unsubNotif = () => supabase.removeChannel(channel)
+}
 
   // ── Update notification badge in DOM ────────────────────
   _updateNotifBadge() {
