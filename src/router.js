@@ -6,8 +6,8 @@ const routes = {
   '/login':                 { page: 'LoginPage',         public: true },
   '/auth/callback':         { page: 'AuthCallback',      public: true },
   '/home':                  { page: 'HomePage',          protected: true },
-  '/leagues':               { page: 'HomePage',          protected: true },
   '/leagues/create':        { page: 'CreateLeaguePage',  protected: true },
+  '/league/:id/edit':       { page: 'EditLeaguePage',    protected: true },
   '/league/:id/games/add':  { page: 'AddGamePage',       protected: true },
   '/league/:id':            { page: 'LeaguePage',        protected: true },
   '/team/:id':              { page: 'TeamPage',          protected: true },
@@ -55,6 +55,7 @@ const pageModules = {
   PlayerCardPage:    () => import('./pages/PlayerCardPage.js'),
   CreateLeaguePage:  () => import('./pages/CreateLeaguePage.js'),
   AddGamePage:       () => import('./pages/AddGamePage.js'),
+  EditLeaguePage:    () => import('./pages/EditLeaguePage.js'),
   NotificationsPage: () => import('./pages/NotificationsPage.js'),
   ProfileRedirect:   () => import('./pages/ProfileRedirect.js'),
   SettingsPage:      () => import('./pages/SettingsPage.js'),
@@ -161,3 +162,4 @@ export function initRouter() {
 
   renderRoute(window.location.pathname)
 }
+// Note: EditLeaguePage added below — append to pageModules manually if needed
