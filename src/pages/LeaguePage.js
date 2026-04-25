@@ -361,7 +361,7 @@ export async function render(root, params) {
     if (btn) { btn.textContent='הועתק!'; setTimeout(()=>btn.textContent='העתק',2000) }
   }
 
-  const ch = supabase.channel(`standings:${leagueId}`)
+  const ch = supabase.channel(`standings:${leagueId}:${Date.now()}`)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'standings',
       filter:`league_id=eq.${leagueId}`}, async () => {
       const fresh = await fetchStandings(leagueId, mode)
