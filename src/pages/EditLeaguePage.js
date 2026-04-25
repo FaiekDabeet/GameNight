@@ -405,10 +405,7 @@ export async function render(root, params) {
     if (!name || name.length < 3) { showErr('שם חייב להכיל לפחות 3 תווים'); return }
     if (!selectedSport) { showErr('יש לבחור ענף'); return }
 
-    // אישור ראשון
-    if (!confirm(`לשמור שינויים בליגה "${name}"?`)) return
-    // אישור שני
-    if (!confirm('אישור סופי — השינויים ייכנסו לתוקף מיד')) return
+    if (!confirm(`לשמור שינויים בליגה "${name}"? פעולה זו תיכנס לתוקף מיד.`)) return
 
     isSubmitting = true
     const btn = document.getElementById('save-btn')
@@ -452,8 +449,7 @@ export async function render(root, params) {
   window.handleCompleteSeason = async () => {
     const newSeason = document.getElementById('new-season')?.value?.trim()
     if (!newSeason) { showErr('יש להכניס שם לעונה החדשה'); return }
-    if (!confirm(`לסיים את העונה הנוכחית ולהתחיל עונה "${newSeason}"?`)) return
-    if (!confirm('אישור סופי — פעולה זו לא ניתנת לביטול')) return
+    if (!confirm(`לסיים את העונה הנוכחית ולהתחיל עונה "${newSeason}"? פעולה זו לא ניתנת לביטול.`)) return
 
     try {
       await completeSeason({ leagueId, ownerId: authUser.id, newSeason })
@@ -471,7 +467,6 @@ export async function render(root, params) {
       ? 'לנעול את הליגה? לא יהיה ניתן להוסיף משחקים או לערוך עד הפתיחה.'
       : 'לפתוח את הליגה? היא תחזור להיות פעילה.'
     if (!confirm(msg)) return
-    if (!confirm('אישור סופי')) return
 
     try {
       const { error } = await supabase
@@ -491,10 +486,9 @@ export async function render(root, params) {
   }
 
   window.handleDelete = async () => {
-    if (!confirm(`למחוק לצמיתות את הליגה "${league.name}"? כל הנתונים יאבדו.`)) return
-    if (!confirm(`אישור סופי — כתוב "מחק" בחלון הבא`)) return
-    const typed = prompt('כתוב "מחק" לאישור:')
-    if (typed !== 'מחק') { showErr('מחיקה בוטלה — הטקסט לא תואם'); return }
+    const typed = prompt(`מחיקת "${league.name}" היא פעולה בלתי הפיכה.
+כתוב "מחק" לאישור:`)
+    if (typed !== 'מחק') { showErr('מחיקה בוטלה'); return }
 
     try {
       const { error } = await supabase
