@@ -6,6 +6,7 @@ const routes = {
   '/login':                 { page: 'LoginPage',         public: true },
   '/auth/callback':         { page: 'AuthCallback',      public: true },
   '/home':                  { page: 'HomePage',          protected: true },
+  '/leagues':               { page: 'LeaguesPage',       protected: true },
   '/leagues/create':        { page: 'CreateLeaguePage',  protected: true },
   '/league/:id/edit':       { page: 'EditLeaguePage',    protected: true },
   '/league/:id/games/add':  { page: 'AddGamePage',       protected: true },
@@ -61,6 +62,7 @@ const pageModules = {
   SettingsPage:      () => import('./pages/SettingsPage.js'),
   DiscoverPage:      () => import('./pages/DiscoverPage.js'),
   UpgradePage:       () => import('./pages/UpgradePage.js'),
+  LeaguesPage:       () => import('./pages/LeaguesPage.js'),
   NotFoundPage:      () => import('./pages/NotFoundPage.js'),
 }
 
