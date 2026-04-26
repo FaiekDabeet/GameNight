@@ -60,6 +60,7 @@ const pageModules = {
   ProfileRedirect:   () => import('./pages/ProfileRedirect.js'),
   SettingsPage:      () => import('./pages/SettingsPage.js'),
   DiscoverPage:      () => import('./pages/DiscoverPage.js'),
+  UpgradePage:       () => import('./pages/UpgradePage.js'),
   NotFoundPage:      () => import('./pages/NotFoundPage.js'),
 }
 
