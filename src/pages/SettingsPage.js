@@ -210,7 +210,7 @@ export async function render(root) {
           ${!isPro ? `
             <button class="btn btn-primary"
               style="background:linear-gradient(135deg,#FF9B51,#E07A30)"
-              onclick="navigate('/upgrade')">
+              onclick="navigate('/upgradePage')">
               ⬆️ שדרג ל-Pro
             </button>` : ''
           }
