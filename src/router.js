@@ -17,7 +17,6 @@ const routes = {
   '/profile':               { page: 'ProfileRedirect',   protected: true },
   '/settings':              { page: 'SettingsPage',      protected: true },
   '/discover':              { page: 'DiscoverPage',      protected: true },
-  '/upgrade':               { page: 'UpgradePage',  protected: true },
   '/404':                   { page: 'NotFoundPage',      public: true },
 }
 
