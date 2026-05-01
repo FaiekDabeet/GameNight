@@ -553,7 +553,8 @@ function leagueCardHtml(league, variant = 'follow', currentUserId = null) {
   return `
     <div class="gn-lcard" data-league-id="${league.id}">
 
-      <!-- 3-dot menu -->
+      ${isOwner ? `
+      <!-- 3-dot menu — owners only -->
       <div class="gn-menu-wrap">
         <button class="gn-menu-btn" onclick="_gnToggleMenu(event,this)" title="אפשרויות">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
@@ -561,28 +562,21 @@ function leagueCardHtml(league, variant = 'follow', currentUserId = null) {
           </svg>
         </button>
         <div class="gn-dropdown">
-          ${isOwner ? `
-            <button class="gn-menu-item" onclick="_gnMenuAction(event,'update','${league.id}')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4C7.58 4 4 7.58 4 12s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-              עדכון טבלה
-            </button>
-            <button class="gn-menu-item" onclick="_gnMenuAction(event,'edit','${league.id}')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-              עדכון פרטי ליגה
-            </button>
-            <div class="gn-menu-divider"></div>
-            <button class="gn-menu-item gn-danger" onclick="_gnMenuAction(event,'remove','${league.id}')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-              הסר ליגה
-            </button>
-          ` : `
-            <button class="gn-menu-item" onclick="_gnMenuAction(event,'follow','${league.id}')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-              עקוב / הפסק לעקוב
-            </button>
-          `}
+          <button class="gn-menu-item" onclick="_gnMenuAction(event,'update','${league.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4C7.58 4 4 7.58 4 12s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            עדכון טבלה
+          </button>
+          <button class="gn-menu-item" onclick="_gnMenuAction(event,'edit','${league.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            עדכון פרטי ליגה
+          </button>
+          <div class="gn-menu-divider"></div>
+          <button class="gn-menu-item gn-danger" onclick="_gnMenuAction(event,'remove','${league.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            מחיקת ליגה
+          </button>
         </div>
-      </div>
+      </div>` : ''}
 
       <!-- Banner -->
       <div class="gn-banner">
