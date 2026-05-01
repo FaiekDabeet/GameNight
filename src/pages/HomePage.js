@@ -510,17 +510,17 @@ function gnInitCarousel(uid) {
  * The `variant` param controls which footer actions appear.
  * Everything else in the file is untouched.
  */
-function leagueCardHtml(league, variant = 'follow') {
+function leagueCardHtml(league, variant = 'follow', currentUserId = null) {
   const memberCount = league.league_members?.[0]?.count ?? 0
   const gameCount   = league.games?.[0]?.count ?? 0
   const locked      = league.is_locked
+  const isOwner     = currentUserId && league.owner_id === currentUserId
 
   const colors     = sportBannerColors(league.sport_type)
   const bannerImg  = league.cover_url || sportBannerImg(league.sport_type)
   const emoji      = sportEmoji(league.sport_type)
 
   // Status badge — derive from league data
-  const now = Date.now()
   let statusCls = 'gn-status-active', statusTxt = 'פעילה'
   if (locked) { statusCls = 'gn-status-done'; statusTxt = 'הסתיימה' }
 
@@ -562,6 +562,7 @@ function leagueCardHtml(league, variant = 'follow') {
           </svg>
         </button>
         <div class="gn-dropdown">
+          ${isOwner ? `
           <button class="gn-menu-item" onclick="_gnMenuAction(event,'update','${league.id}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4C7.58 4 4 7.58 4 12s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
             עדכון ליגה
@@ -570,10 +571,10 @@ function leagueCardHtml(league, variant = 'follow') {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
             עריכת פרטי ליגה
           </button>
-          <div class="gn-menu-divider"></div>
+          <div class="gn-menu-divider"></div>` : ''}
           <button class="gn-menu-item gn-danger" onclick="_gnMenuAction(event,'remove','${league.id}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-            הסרת ליגה
+            ${isOwner ? 'הסרת ליגה' : 'הסר מהרשימה'}
           </button>
         </div>
       </div>
@@ -630,11 +631,11 @@ function leagueCardHtml(league, variant = 'follow') {
  * Replaces the previous `<div class="grid-cards">` wrapper.
  */
 let _carouselUid = 0
-function carouselSectionHtml(leagues, variant, emptyCtaLabel, emptyCtaHref) {
+function carouselSectionHtml(leagues, variant, emptyCtaLabel, emptyCtaHref, currentUserId = null) {
   injectCarouselCss()
   const uid = `c${++_carouselUid}`
 
-  const cards = leagues.map(l => leagueCardHtml(l, variant)).join('')
+  const cards = leagues.map(l => leagueCardHtml(l, variant, currentUserId)).join('')
 
   // Empty CTA card — always appended at end of track
   const ctaCard = `
@@ -761,7 +762,7 @@ export async function render(root) {
           <button class="btn btn-ghost btn-sm" onclick="navigate('/discover')">גלה עוד</button>
         </div>
         ${followedLeagues.length
-          ? carouselSectionHtml(followedLeagues, 'follow', 'גלה ליגות', '/discover')
+          ? carouselSectionHtml(followedLeagues, 'follow', 'גלה ליגות', '/discover', authUser.id)
           : emptyCard(
               `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
               'עדיין לא עוקב אחר ליגות',
@@ -783,7 +784,7 @@ export async function render(root) {
           <button class="btn btn-primary btn-sm" onclick="navigate('/leagues/create')">+ צור ליגה</button>
         </div>
         ${managedLeagues.length
-          ? carouselSectionHtml(managedLeagues, 'managed', 'צור ליגה חדשה', '/leagues/create')
+          ? carouselSectionHtml(managedLeagues, 'managed', 'צור ליגה חדשה', '/leagues/create', authUser.id)
           : emptyCard(
               `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>`,
               'עדיין לא יצרת ליגה',
@@ -827,7 +828,7 @@ export async function render(root) {
           <span class="chip">🎾 פאדל</span>
         </div>
         ${discoverLeagues.length
-          ? carouselSectionHtml(discoverLeagues, 'discover', 'גלה עוד ליגות', '/discover')
+          ? carouselSectionHtml(discoverLeagues, 'discover', 'גלה עוד ליגות', '/discover', authUser.id)
           : `<p style="font-size:var(--text-sm);color:var(--text-tertiary);text-align:center;padding:var(--space-6) 0">אין ליגות פומביות כרגע</p>`
         }
       </section>
