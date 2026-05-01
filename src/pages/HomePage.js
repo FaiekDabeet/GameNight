@@ -21,6 +21,40 @@ function sportEmoji(sport) {
   return map[sport] || '🏆'
 }
 
+// Sport → Unsplash banner image (sport-specific placeholder)
+function sportBannerImg(sport) {
+  const map = {
+    football:   'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80&auto=format&fit=crop',
+    basketball: 'https://images.unsplash.com/photo-1546519638405-a2b97b2a4de7?w=800&q=80&auto=format&fit=crop',
+    ping_pong:  'https://images.unsplash.com/photo-1611251135345-18c56206b863?w=800&q=80&auto=format&fit=crop',
+    chess:      'https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=800&q=80&auto=format&fit=crop',
+    volleyball: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&q=80&auto=format&fit=crop',
+    poker:      'https://images.unsplash.com/photo-1541278107931-e006523892df?w=800&q=80&auto=format&fit=crop',
+    backgammon: 'https://images.unsplash.com/photo-1632501641765-e568d28b0015?w=800&q=80&auto=format&fit=crop',
+    tennis:     'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80&auto=format&fit=crop',
+    padel:      'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80&auto=format&fit=crop',
+    darts:      'https://images.unsplash.com/photo-1611732988895-80b5e2a7c684?w=800&q=80&auto=format&fit=crop',
+  }
+  return map[sport] || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80&auto=format&fit=crop'
+}
+
+// Sport → banner gradient colors
+function sportBannerColors(sport) {
+  const map = {
+    football:   ['#1a3a2a','#0f2a1c'],
+    basketball: ['#2a1a0a','#1c0f05'],
+    ping_pong:  ['#1a1a2a','#0f0f1c'],
+    chess:      ['#1a1510','#120f08'],
+    volleyball: ['#0a1a2a','#051020'],
+    poker:      ['#1a0a10','#120008'],
+    backgammon: ['#1a0a1a','#120812'],
+    tennis:     ['#0a1a0a','#051205'],
+    padel:      ['#0a1a0a','#051205'],
+    darts:      ['#1a1010','#120808'],
+  }
+  return map[sport] || ['#1a1a1a','#0f0f0f']
+}
+
 function avatarHtml(url, name, size = 28) {
   if (url) {
     return `<img src="${url}" width="${size}" height="${size}" loading="lazy" alt="${name}"
@@ -109,71 +143,526 @@ async function fetchRecentGames(userId) {
   return data || []
 }
 
+// ── Carousel CSS (injected once) ─────────────────────────────
+// Injected into <head> the first time carouselSectionHtml is called.
+let _carouselCssInjected = false
+function injectCarouselCss() {
+  if (_carouselCssInjected) return
+  _carouselCssInjected = true
+  const style = document.createElement('style')
+  style.textContent = `
+    /* ── GN Carousel ── */
+    .gn-carousel-section { margin-bottom: var(--space-10, 40px); }
+
+    .gn-persp-wrap {
+      width: 100%;
+      perspective: 1400px;
+      overflow: hidden;
+    }
+
+    .gn-track {
+      display: flex;
+      gap: 18px;
+      padding: 40px 0 44px;
+      padding-inline: calc(50% - 38%);
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+      cursor: grab;
+      user-select: none;
+    }
+    .gn-track:active { cursor: grabbing; }
+    .gn-track::-webkit-scrollbar { display: none; }
+
+    /* ── League card ── */
+    .gn-lcard {
+      flex: 0 0 72%;
+      background: var(--bg-surface, #22313E);
+      border-radius: 20px;
+      border: 1.5px solid transparent;
+      scroll-snap-align: center;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transform: scale(0.84) translateZ(-180px);
+      opacity: 0.38;
+      filter: blur(3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: all 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.15s ease;
+    }
+    .gn-lcard.gn-active {
+      transform: scale(1) translateZ(0);
+      opacity: 1;
+      filter: blur(0);
+      border-color: var(--gn-orange, #FF9B51);
+      box-shadow:
+        0 0 0 4px rgba(255,155,81,0.15),
+        0 24px 64px rgba(0,0,0,0.5);
+      z-index: 10;
+    }
+    .gn-lcard:active            { transform: scale(0.97) translateZ(-60px); }
+    .gn-lcard.gn-active:active  { transform: scale(0.98) translateZ(0); }
+
+    /* ── Banner ── */
+    .gn-banner {
+      height: 110px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      padding: 12px 14px;
+    }
+    .gn-banner-bg   { position: absolute; inset: 0; }
+    .gn-banner-img  {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center;
+      opacity: 0.52;
+      transition: opacity 0.4s;
+      pointer-events: none;
+      user-select: none;
+    }
+    .gn-lcard.gn-active .gn-banner-img { opacity: 0.72; }
+    .gn-banner-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.08) 100%);
+    }
+    .gn-banner-row {
+      position: relative; z-index: 1;
+      display: flex; align-items: flex-end;
+      justify-content: space-between; width: 100%;
+    }
+    .gn-sport-icon { font-size: 36px; line-height: 1; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
+    .gn-status-badge {
+      font-size: 10px; font-weight: 700;
+      padding: 3px 9px; border-radius: 20px;
+      letter-spacing: 0.4px;
+    }
+    .gn-status-active   { background:rgba(30,180,100,0.25); color:#4DD991; border:1px solid rgba(77,217,145,0.4); }
+    .gn-status-upcoming { background:rgba(255,155,81,0.20); color:#FF9B51; border:1px solid rgba(255,155,81,0.4); }
+    .gn-status-done     { background:rgba(255,255,255,0.10); color:#7A95A8; border:1px solid rgba(255,255,255,0.15); }
+
+    /* ── Card body ── */
+    .gn-cbody { padding: 14px 16px 16px; }
+    .gn-league-name {
+      font-size: 17px; font-weight: 800;
+      color: var(--text-primary, #EAEFEF);
+      line-height: 1.2; margin-bottom: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .gn-league-meta {
+      font-size: 11px; color: var(--text-tertiary, #7A95A8);
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .gn-meta-sep { color: #4E6475; }
+
+    /* ── Stats strip ── */
+    .gn-stats {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 1px; background: rgba(255,255,255,0.06);
+      border-radius: 10px; overflow: hidden; margin-bottom: 12px;
+    }
+    .gn-stat {
+      background: rgba(255,255,255,0.03);
+      padding: 7px 4px; text-align: center;
+    }
+    .gn-stat-val { font-size: 16px; font-weight: 800; color: var(--text-primary, #EAEFEF); line-height: 1; }
+    .gn-stat-lbl { font-size: 10px; color: var(--text-tertiary, #7A95A8); margin-top: 2px; }
+
+    /* ── Footer ── */
+    .gn-card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 2px;
+    }
+    .gn-avatars { display: flex; }
+    .gn-av {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 2px solid var(--bg-surface, #22313E);
+      margin-left: -6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; flex-shrink: 0;
+      overflow: hidden;
+    }
+    .gn-av:first-child { margin-left: 0; }
+    .gn-av img { width:100%; height:100%; object-fit:cover; }
+    .gn-members-txt { font-size: 11px; color: var(--text-tertiary, #7A95A8); margin-right: 6px; }
+
+    /* ── 3-dot menu ── */
+    .gn-menu-wrap {
+      position: absolute; top: 9px; left: 9px; z-index: 20;
+    }
+    .gn-menu-btn {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(0,0,0,0.45); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(6px);
+      transition: background 0.2s, transform 0.15s;
+      color: #EAEFEF;
+    }
+    .gn-menu-btn:hover  { background: rgba(0,0,0,0.65); }
+    .gn-menu-btn:active { transform: scale(0.9); }
+    .gn-menu-btn svg { pointer-events: none; }
+
+    .gn-dropdown {
+      position: absolute; top: 36px; left: 0;
+      background: #2A3D4E;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 13px; overflow: hidden; min-width: 165px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+      opacity: 0; transform: scale(0.88) translateY(-6px);
+      transform-origin: top left; pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    .gn-dropdown.gn-open {
+      opacity: 1; transform: scale(1) translateY(0); pointer-events: auto;
+    }
+    .gn-menu-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 10px 13px; font-size: 13px; font-weight: 600;
+      font-family: inherit; color: #EAEFEF;
+      cursor: pointer; border: none; background: transparent;
+      width: 100%; text-align: right; transition: background 0.15s; direction: rtl;
+    }
+    .gn-menu-item:hover { background: rgba(255,255,255,0.07); }
+    .gn-menu-item.gn-danger { color: #E8735A; }
+    .gn-menu-item svg { flex-shrink: 0; opacity: 0.75; }
+    .gn-menu-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 2px 0; }
+
+    /* ── Dots ── */
+    .gn-dots {
+      display: flex; justify-content: center; gap: 7px; margin-top: 4px;
+    }
+    .gn-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(255,255,255,0.15); border: none; cursor: pointer;
+      transition: all 0.32s cubic-bezier(0.34,1.56,0.64,1); padding: 0;
+    }
+    .gn-dot.gn-dot-on { width: 24px; border-radius: 10px; background: var(--gn-orange, #FF9B51); }
+
+    /* ── Empty CTA card ── */
+    .gn-card-empty {
+      flex: 0 0 72%;
+      background: var(--bg-surface, #22313E);
+      border-radius: 20px;
+      border: 1.5px dashed rgba(255,155,81,0.25);
+      scroll-snap-align: center;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; padding: 32px 24px; text-align: center;
+      transform: scale(0.84) translateZ(-180px);
+      opacity: 0.38; filter: blur(3px);
+      transition: all 0.6s cubic-bezier(0.2,0.8,0.2,1);
+    }
+    .gn-card-empty.gn-active {
+      transform: scale(1) translateZ(0); opacity: 1; filter: blur(0);
+      border-color: rgba(255,155,81,0.45);
+      box-shadow: 0 0 0 4px rgba(255,155,81,0.12), 0 20px 56px rgba(0,0,0,0.4);
+    }
+    .gn-empty-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(255,155,81,0.12);
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+    }
+    .gn-empty-title { font-size: 16px; font-weight: 800; color: var(--text-primary, #EAEFEF); }
+    .gn-empty-sub   { font-size: 12px; color: var(--text-tertiary, #7A95A8); line-height: 1.6; max-width: 200px; }
+
+    /* ── Ripple ── */
+    .gn-ripple {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,155,81,0.16);
+      transform: scale(0); animation: gnRip 0.6s linear; pointer-events: none;
+    }
+    @keyframes gnRip { to { transform: scale(4); opacity: 0; } }
+
+    /* ── Mobile ── */
+    @media (max-width: 480px) {
+      .gn-track { padding-inline: calc(50% - 43%); gap: 12px; padding-top: 30px; padding-bottom: 34px; }
+      .gn-lcard, .gn-card-empty { flex: 0 0 84%; }
+      .gn-lcard { transform: scale(0.92) translateZ(-80px); }
+    }
+    @media (min-width: 481px) and (max-width: 700px) {
+      .gn-lcard, .gn-card-empty { flex: 0 0 78%; }
+    }
+  `
+  document.head.appendChild(style)
+}
+
+// ── Carousel state registry ───────────────────────────────────
+// Each carousel instance gets its own state object keyed by a uid.
+const _carousels = {}
+let _gnOpenMenu = null
+
+// Close any open dropdown when clicking outside
+document.addEventListener('click', () => {
+  if (_gnOpenMenu) { _gnOpenMenu.classList.remove('gn-open'); _gnOpenMenu = null }
+})
+
+function gnToggleMenu(e, btn) {
+  e.stopPropagation()
+  const dd = btn.nextElementSibling
+  if (_gnOpenMenu && _gnOpenMenu !== dd) _gnOpenMenu.classList.remove('gn-open')
+  dd.classList.toggle('gn-open')
+  _gnOpenMenu = dd.classList.contains('gn-open') ? dd : null
+}
+
+function gnMenuAction(e, action, leagueId) {
+  e.stopPropagation()
+  if (_gnOpenMenu) { _gnOpenMenu.classList.remove('gn-open'); _gnOpenMenu = null }
+  const labels = { update:'עדכון ליגה', edit:'עריכת פרטי ליגה', remove:'הסרת ליגה' }
+  // Hook into router navigate for real actions; alert is placeholder
+  if (action === 'edit')   navigate(`/league/${leagueId}/edit`)
+  else if (action === 'update') navigate(`/league/${leagueId}/update`)
+  else if (action === 'remove') {
+    if (confirm('להסיר את הליגה?')) alert(`הסרת ליגה ${leagueId}`)
+  }
+}
+
+// Expose to inline onclick (called from injected HTML strings)
+window._gnToggleMenu  = gnToggleMenu
+window._gnMenuAction  = gnMenuAction
+
+function gnAddRipple(e, el) {
+  const r = document.createElement('span')
+  r.className = 'gn-ripple'
+  const d = Math.max(el.offsetWidth, el.offsetHeight)
+  const rect = el.getBoundingClientRect()
+  const cx = (e.clientX ?? rect.left + rect.width  / 2) - rect.left - d / 2
+  const cy = (e.clientY ?? rect.top  + rect.height / 2) - rect.top  - d / 2
+  r.style.cssText = `width:${d}px;height:${d}px;left:${cx}px;top:${cy}px`
+  el.appendChild(r)
+  r.addEventListener('animationend', () => r.remove())
+}
+
+function gnInitCarousel(uid) {
+  const track = document.getElementById(`gn-track-${uid}`)
+  if (!track) return
+
+  const allCards = [...track.querySelectorAll('.gn-lcard, .gn-card-empty')]
+  const leagueCards = [...track.querySelectorAll('.gn-lcard')]
+  const dots = [...document.querySelectorAll(`#gn-dots-${uid} .gn-dot`)]
+  let isDragging = false, startX = 0, startScroll = 0, hasDragged = false
+
+  function scrollTo(idx) {
+    const target = allCards[idx]
+    if (!target) return
+    const off = target.offsetLeft - (track.offsetWidth - target.offsetWidth) / 2
+    track.scrollTo({ left: off, behavior: 'smooth' })
+  }
+
+  function updateActive() {
+    const cx = track.getBoundingClientRect().left + track.offsetWidth / 2
+    let best = 0, bestDist = Infinity
+    allCards.forEach((c, i) => {
+      const r = c.getBoundingClientRect()
+      const dist = Math.abs(cx - (r.left + r.width / 2))
+      if (dist < bestDist) { bestDist = dist; best = i }
+    })
+    allCards.forEach((c, i) => c.classList.toggle('gn-active', i === best))
+    dots.forEach((d, i) => d.classList.toggle('gn-dot-on', i === best))
+  }
+
+  // Dots click
+  dots.forEach((d, i) => { d.onclick = () => scrollTo(i) })
+
+  // Mouse drag
+  track.addEventListener('mousedown', e => {
+    isDragging = true; hasDragged = false
+    startX = e.pageX; startScroll = track.scrollLeft
+    track.style.scrollBehavior = 'auto'
+    track.style.scrollSnapType = 'none'
+    const card = e.target.closest('.gn-lcard')
+    if (card) gnAddRipple(e, card)
+  })
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return
+    const dx = (e.pageX - startX) * 1.4
+    if (Math.abs(dx) > 4) hasDragged = true
+    track.scrollLeft = startScroll - dx
+  })
+  window.addEventListener('mouseup', e => {
+    if (!isDragging) return
+    isDragging = false
+    track.style.scrollBehavior = 'smooth'
+    track.style.scrollSnapType = 'x mandatory'
+    if (!hasDragged) {
+      const card = e.target.closest('.gn-lcard')
+      if (card) scrollTo(leagueCards.indexOf(card))
+    }
+    setTimeout(updateActive, 380)
+  })
+
+  // Touch
+  track.addEventListener('touchend', () => setTimeout(updateActive, 380), { passive: true })
+  track.addEventListener('scroll', () => requestAnimationFrame(updateActive))
+
+  // Init
+  scrollTo(0)
+  setTimeout(updateActive, 80)
+}
+
 // ── Card renders ─────────────────────────────────────────────
+
+/**
+ * CHANGED: leagueCardHtml now renders the full V2 carousel card
+ * with banner image, stats-strip, 3-dot menu, and member avatars.
+ * The `variant` param controls which footer actions appear.
+ * Everything else in the file is untouched.
+ */
 function leagueCardHtml(league, variant = 'follow') {
   const memberCount = league.league_members?.[0]?.count ?? 0
   const gameCount   = league.games?.[0]?.count ?? 0
   const locked      = league.is_locked
-    ? `<span class="badge badge-locked">נעולה</span>` : ''
 
-  const coverSection = league.cover_url
-    ? `<img src="${league.cover_url}" class="card-cover" alt="${league.name}" loading="lazy">`
-    : `<div class="card-cover-placeholder">${sportEmoji(league.sport_type)}</div>`
+  const colors     = sportBannerColors(league.sport_type)
+  const bannerImg  = league.cover_url || sportBannerImg(league.sport_type)
+  const emoji      = sportEmoji(league.sport_type)
 
-  const logoHtml = league.logo_url
-    ? `<img src="${league.logo_url}" class="league-card-logo" alt="${league.name}">`
-    : `<div class="league-card-logo" style="display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--bg-surface-2)">${sportEmoji(league.sport_type)}</div>`
+  // Status badge — derive from league data
+  const now = Date.now()
+  let statusCls = 'gn-status-active', statusTxt = 'פעילה'
+  if (locked) { statusCls = 'gn-status-done'; statusTxt = 'הסתיימה' }
 
-  const statsSection = variant === 'managed' ? `
-    <div class="stats-row" style="margin-top:var(--space-3)">
-      <div class="stat-item">
-        <div class="stat-value">${memberCount}</div>
-        <div class="stat-label">שחקנים</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value">${gameCount}</div>
-        <div class="stat-label">משחקים</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value">${league.season || '—'}</div>
-        <div class="stat-label">עונה</div>
-      </div>
-    </div>` : `
-    <div style="display:flex;align-items:center;gap:var(--space-2);margin-top:var(--space-2)">
-      <span style="font-size:var(--text-xs);color:var(--text-tertiary)">${memberCount} שחקנים</span>
-      <span style="margin-inline-start:auto;font-size:var(--text-xs);color:var(--text-tertiary)">
-        ${timeAgo(league.last_activity_at)}
-      </span>
-    </div>`
-
+  // Footer actions per variant
   const footerActions = variant === 'managed' ? `
     <button class="btn btn-primary btn-sm" onclick="navigate('/league/${league.id}')">כנס</button>
     <button class="btn btn-secondary btn-sm" onclick="navigate('/league/${league.id}/edit')"
-      ${league.is_locked ? 'disabled title="ליגה נעולה"' : ''}>עריכה</button>
-  ` : `
+      ${locked ? 'disabled title="ליגה נעולה"' : ''}>עריכה</button>
+  ` : variant === 'discover' ? `
+    <button class="btn btn-primary btn-sm" onclick="navigate('/league/${league.id}')">כנס לליגה</button>
+    <button class="btn btn-ghost btn-sm">עקוב</button>
+  ` : /* follow */ `
     <button class="btn btn-primary btn-sm" onclick="navigate('/league/${league.id}')">כנס לליגה</button>
     <button class="btn btn-ghost btn-sm">עקוב</button>
   `
 
+  // Member avatar strip (up to 4)
+  const avatarStrip = `
+    <div style="display:flex;align-items:center">
+      <div class="gn-avatars">
+        ${Array.from({ length: Math.min(memberCount, 4) }, (_, i) =>
+          `<div class="gn-av" style="background:var(--gn-orange);color:#fff;font-size:9px;font-weight:700">
+            ${String.fromCharCode(65 + i)}
+          </div>`
+        ).join('')}
+        ${memberCount > 4 ? `<div class="gn-av" style="background:#324455;color:#7A95A8">+${memberCount - 4}</div>` : ''}
+      </div>
+      <span class="gn-members-txt">${memberCount} שחקנים</span>
+    </div>`
+
   return `
-    <div class="card">
-      ${coverSection}
-      <div class="card-body">
-        <div class="league-card-header">
-          ${logoHtml}
-          <div style="min-width:0;flex:1">
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-              <h3 class="league-card-name truncate">${league.name}</h3>
-              ${locked}
-            </div>
-            <p class="league-card-sport">${league.sport_type || 'כללי'}</p>
+    <div class="gn-lcard" data-league-id="${league.id}">
+
+      <!-- 3-dot menu -->
+      <div class="gn-menu-wrap">
+        <button class="gn-menu-btn" onclick="_gnToggleMenu(event,this)" title="אפשרויות">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+            <circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>
+          </svg>
+        </button>
+        <div class="gn-dropdown">
+          <button class="gn-menu-item" onclick="_gnMenuAction(event,'update','${league.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4C7.58 4 4 7.58 4 12s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            עדכון ליגה
+          </button>
+          <button class="gn-menu-item" onclick="_gnMenuAction(event,'edit','${league.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            עריכת פרטי ליגה
+          </button>
+          <div class="gn-menu-divider"></div>
+          <button class="gn-menu-item gn-danger" onclick="_gnMenuAction(event,'remove','${league.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            הסרת ליגה
+          </button>
+        </div>
+      </div>
+
+      <!-- Banner -->
+      <div class="gn-banner">
+        <div class="gn-banner-bg" style="background:linear-gradient(135deg,${colors[0]},${colors[1]})"></div>
+        <img class="gn-banner-img" src="${bannerImg}" alt="${league.name}" loading="lazy" draggable="false">
+        <div class="gn-banner-overlay"></div>
+        <div class="gn-banner-row">
+          <div class="gn-sport-icon">${emoji}</div>
+          <div class="gn-status-badge ${statusCls}">${statusTxt}</div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="gn-cbody">
+        <div class="gn-league-name">${league.name}</div>
+        <div class="gn-league-meta">
+          <span>${league.sport_type || 'כללי'}</span>
+          <span class="gn-meta-sep">·</span>
+          <span>${league.season || '—'}</span>
+          ${variant === 'managed' ? `<span class="gn-meta-sep">·</span><span style="color:var(--gn-orange,#FF9B51)">${gameCount} משחקים</span>` : ''}
+        </div>
+
+        <!-- Stats strip -->
+        <div class="gn-stats">
+          <div class="gn-stat">
+            <div class="gn-stat-val">${memberCount}</div>
+            <div class="gn-stat-lbl">שחקנים</div>
+          </div>
+          <div class="gn-stat">
+            <div class="gn-stat-val">${gameCount || '—'}</div>
+            <div class="gn-stat-lbl">משחקים</div>
+          </div>
+          <div class="gn-stat">
+            <div class="gn-stat-val" style="font-size:11px;padding-top:3px">${timeAgo(league.last_activity_at) || '—'}</div>
+            <div class="gn-stat-lbl">פעילות אחרונה</div>
           </div>
         </div>
-        ${statsSection}
+
+        <!-- Footer -->
+        <div class="gn-card-footer">
+          ${avatarStrip}
+          <div style="display:flex;gap:6px">${footerActions}</div>
+        </div>
       </div>
-      <div class="card-footer">${footerActions}</div>
     </div>`
 }
+
+/**
+ * CHANGED: carouselSectionHtml wraps a list of league cards in the
+ * V2 carousel shell (perspective wrap, track, dots, empty CTA card).
+ * Replaces the previous `<div class="grid-cards">` wrapper.
+ */
+let _carouselUid = 0
+function carouselSectionHtml(leagues, variant, emptyCtaLabel, emptyCtaHref) {
+  injectCarouselCss()
+  const uid = `c${++_carouselUid}`
+
+  const cards = leagues.map(l => leagueCardHtml(l, variant)).join('')
+
+  // Empty CTA card — always appended at end of track
+  const ctaCard = `
+    <div class="gn-card-empty">
+      <div class="gn-empty-icon">🔭</div>
+      <div class="gn-empty-title">זה הכל לעכשיו!</div>
+      <div class="gn-empty-sub">רוצים למצוא ליגות נוספות?</div>
+      <button class="btn btn-primary btn-sm" onclick="navigate('${emptyCtaHref}')">${emptyCtaLabel}</button>
+    </div>`
+
+  // One dot per card + one for CTA
+  const dotCount = leagues.length + 1
+  const dots = Array.from({ length: dotCount }, () => `<button class="gn-dot"></button>`).join('')
+
+  // Schedule init after render
+  setTimeout(() => gnInitCarousel(uid), 0)
+
+  return `
+    <div class="gn-persp-wrap">
+      <div class="gn-track" id="gn-track-${uid}">
+        ${cards}
+        ${ctaCard}
+      </div>
+    </div>
+    <div class="gn-dots" id="gn-dots-${uid}">${dots}</div>`
+}
+
+// ── Unchanged helpers ─────────────────────────────────────────
 
 function gameRowHtml(game) {
   const home = game.home?.display_name || 'בית'
@@ -263,7 +752,7 @@ export async function render(root) {
     <div dir="rtl">
 
       <!-- 1. Followed leagues -->
-      <section style="margin-bottom:var(--space-10)">
+      <section class="gn-carousel-section">
         <div class="section-header">
           <div>
             <h2 class="section-title">ליגות שאני עוקב</h2>
@@ -272,7 +761,7 @@ export async function render(root) {
           <button class="btn btn-ghost btn-sm" onclick="navigate('/discover')">גלה עוד</button>
         </div>
         ${followedLeagues.length
-          ? `<div class="grid-cards">${followedLeagues.map(l => leagueCardHtml(l,'follow')).join('')}</div>`
+          ? carouselSectionHtml(followedLeagues, 'follow', 'גלה ליגות', '/discover')
           : emptyCard(
               `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
               'עדיין לא עוקב אחר ליגות',
@@ -285,7 +774,7 @@ export async function render(root) {
       ${!isPro ? adSlot() : ''}
 
       <!-- 2. My managed leagues -->
-      <section style="margin-bottom:var(--space-10)">
+      <section class="gn-carousel-section">
         <div class="section-header">
           <div>
             <h2 class="section-title">הליגות שלי</h2>
@@ -294,7 +783,7 @@ export async function render(root) {
           <button class="btn btn-primary btn-sm" onclick="navigate('/leagues/create')">+ צור ליגה</button>
         </div>
         ${managedLeagues.length
-          ? `<div class="grid-cards">${managedLeagues.map(l => leagueCardHtml(l,'managed')).join('')}</div>`
+          ? carouselSectionHtml(managedLeagues, 'managed', 'צור ליגה חדשה', '/leagues/create')
           : emptyCard(
               `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>`,
               'עדיין לא יצרת ליגה',
@@ -322,7 +811,7 @@ export async function render(root) {
       }
 
       <!-- 4. Discover -->
-      <section style="margin-bottom:var(--space-10)">
+      <section class="gn-carousel-section">
         <div class="section-header">
           <div>
             <h2 class="section-title">גלה ליגות</h2>
@@ -338,7 +827,7 @@ export async function render(root) {
           <span class="chip">🎾 פאדל</span>
         </div>
         ${discoverLeagues.length
-          ? `<div class="grid-cards">${discoverLeagues.map(l => leagueCardHtml(l,'discover')).join('')}</div>`
+          ? carouselSectionHtml(discoverLeagues, 'discover', 'גלה עוד ליגות', '/discover')
           : `<p style="font-size:var(--text-sm);color:var(--text-tertiary);text-align:center;padding:var(--space-6) 0">אין ליגות פומביות כרגע</p>`
         }
       </section>
