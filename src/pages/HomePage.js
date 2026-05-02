@@ -11,6 +11,7 @@ import { getCurrentUser, getUserProfile } from '../lib/auth.js'
 import { supabase } from '../lib/supabase.js'
 import { navigate } from '../router.js'
 import { followLeague, unfollowLeague } from '../lib/actions.js'
+import { insertNotification, NOTIF_TYPES } from '../lib/notifications.js'
 
 // ── Helpers ──────────────────────────────────────────────────
 function sportEmoji(sport) {
@@ -445,25 +446,125 @@ window._gnMenuAction   = gnMenuAction
 window._gnToggleFollow = async function(btn, leagueId, userId) {
   const isFollowing = btn.dataset.following === 'true'
   btn.disabled = true
+
   try {
     if (isFollowing) {
+      // ── Unfollow ──────────────────────────────────────────
       await unfollowLeague({ followerId: userId, leagueId })
+
+      // Update button immediately
       btn.dataset.following = 'false'
       btn.textContent = 'עקוב'
       btn.classList.remove('btn-secondary')
       btn.classList.add('btn-ghost')
+
+      // Remove card from "ליגות שאני עוקב" section instantly
+      _gnRemoveFromFollowedSection(leagueId)
+
     } else {
+      // ── Follow ────────────────────────────────────────────
       await followLeague({ followerId: userId, leagueId })
+
+      // Update button immediately
       btn.dataset.following = 'true'
       btn.innerHTML = '✓ עוקב'
       btn.classList.remove('btn-ghost')
       btn.classList.add('btn-secondary')
+
+      // Clone card into "ליגות שאני עוקב" section instantly
+      const sourceCard = btn.closest('.gn-lcard')
+      _gnAddToFollowedSection(leagueId, sourceCard)
+
+      // Notify league owner (fire-and-forget)
+      _gnNotifyLeagueOwner(leagueId, userId).catch(console.error)
     }
   } catch (e) {
     console.error('follow toggle failed', e)
   } finally {
     btn.disabled = false
   }
+}
+
+// ── Helpers for real-time followed section update ─────────────
+
+function _gnGetFollowedTrack() {
+  // The followed section is always carousel uid c1 (first rendered)
+  return document.getElementById('gn-track-c1')
+}
+
+function _gnRemoveFromFollowedSection(leagueId) {
+  const track = _gnGetFollowedTrack()
+  if (!track) return
+  const card = track.querySelector(`.gn-lcard[data-league-id="${leagueId}"]`)
+  if (!card) return
+  // Animate out then remove
+  card.style.transition = 'opacity 0.3s, transform 0.3s'
+  card.style.opacity = '0'
+  card.style.transform = 'scale(0.88)'
+  setTimeout(() => {
+    card.remove()
+    _gnUpdateFollowedCount(track)
+  }, 300)
+}
+
+function _gnAddToFollowedSection(leagueId, sourceCard) {
+  const track = _gnGetFollowedTrack()
+  if (!track) return
+  // Don't add if already there
+  if (track.querySelector(`.gn-lcard[data-league-id="${leagueId}"]`)) return
+
+  // Clone the card and insert before the CTA empty card
+  const clone = sourceCard.cloneNode(true)
+  clone.style.opacity = '0'
+  clone.style.transform = 'scale(0.88)'
+  const emptyCard = track.querySelector('.gn-card-empty')
+  track.insertBefore(clone, emptyCard || null)
+
+  // Animate in
+  requestAnimationFrame(() => {
+    clone.style.transition = 'opacity 0.35s, transform 0.35s'
+    clone.style.opacity = ''
+    clone.style.transform = ''
+  })
+  _gnUpdateFollowedCount(track)
+}
+
+function _gnUpdateFollowedCount(track) {
+  const count = track.querySelectorAll('.gn-lcard').length
+  // Update the section-sub text next to the section title
+  const section = track.closest('.gn-carousel-section')
+  if (!section) return
+  const sub = section.querySelector('.section-sub')
+  if (sub) sub.textContent = `${count} ליגות`
+}
+
+async function _gnNotifyLeagueOwner(leagueId, followerId) {
+  // Get league owner_id and name
+  const { data: league } = await supabase
+    .from('leagues')
+    .select('owner_id, name')
+    .eq('id', leagueId)
+    .single()
+  if (!league || league.owner_id === followerId) return // don't notify self
+
+  // Get follower display_name
+  const { data: follower } = await supabase
+    .from('users')
+    .select('display_name')
+    .eq('id', followerId)
+    .single()
+
+  await insertNotification({
+    userId:  league.owner_id,
+    type:    NOTIF_TYPES.NEW_FOLLOWER,
+    payload: {
+      follower_id:   followerId,
+      follower_name: follower?.display_name || 'משתמש',
+      league_id:     leagueId,
+      league_name:   league.name,
+      message:       `${follower?.display_name || 'משתמש'} התחיל לעקוב אחר הליגה ${league.name}`,
+    },
+  })
 }
 
 function gnAddRipple(e, el) {
