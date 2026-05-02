@@ -93,7 +93,7 @@ async function fetchFollowedLeagues(userId) {
 
   const { data } = await supabase
     .from("leagues")
-    .select("id, name, sport_type, cover_url, logo_url, season, last_activity_at, is_locked, league_members(count)")
+    .select("id, name, sport_type, cover_url, logo_url, owner_id, season, last_activity_at, is_locked, league_members(count)")
     .in("id", ids)
 
   return data || []
@@ -103,7 +103,7 @@ async function fetchManagedLeagues(userId) {
   const { data } = await supabase
     .from('leagues')
     .select(`id, name, sport_type, cover_url, logo_url,
-      season, last_activity_at, is_locked,
+      owner_id, season, last_activity_at, is_locked,
       league_members(count), games(count)`)
     .eq('owner_id', userId)
     .order('last_activity_at', { ascending: false })
@@ -115,7 +115,7 @@ async function fetchDiscoverLeagues(userId) {
   const { data } = await supabase
     .from('leagues')
     .select(`id, name, sport_type, cover_url, logo_url,
-      season, league_members(count)`)
+      owner_id, season, league_members(count)`)
     .eq('is_public', true)
     .neq('owner_id', userId)
     .order('created_at', { ascending: false })
