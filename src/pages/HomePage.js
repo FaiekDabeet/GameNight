@@ -10,6 +10,7 @@ import { AppShell } from '../components/AppShell.js'
 import { getCurrentUser, getUserProfile } from '../lib/auth.js'
 import { supabase } from '../lib/supabase.js'
 import { navigate } from '../router.js'
+import { followLeague, unfollowLeague } from '../lib/actions.js'
 
 // ── Helpers ──────────────────────────────────────────────────
 function sportEmoji(sport) {
@@ -141,6 +142,26 @@ async function fetchRecentGames(userId) {
     .order('played_at', { ascending: false })
     .limit(5)
   return data || []
+}
+
+// Returns up to 4 member profiles per league for avatar strip
+async function fetchLeagueMembers(leagueId) {
+  const { data } = await supabase
+    .from('league_members')
+    .select('users(id, display_name, avatar_url)')
+    .eq('league_id', leagueId)
+    .limit(5)
+  return (data || []).map(row => row.users).filter(Boolean)
+}
+
+// Returns set of league IDs the current user already follows
+async function fetchFollowedLeagueIds(userId) {
+  const { data } = await supabase
+    .from('follows')
+    .select('target_id')
+    .eq('follower_id', userId)
+    .eq('target_type', 'league')
+  return new Set((data || []).map(r => r.target_id))
 }
 
 // ── Carousel CSS (injected once) ─────────────────────────────
@@ -419,8 +440,31 @@ function gnMenuAction(e, action, leagueId) {
 }
 
 // Expose to inline onclick (called from injected HTML strings)
-window._gnToggleMenu  = gnToggleMenu
-window._gnMenuAction  = gnMenuAction
+window._gnToggleMenu   = gnToggleMenu
+window._gnMenuAction   = gnMenuAction
+window._gnToggleFollow = async function(btn, leagueId, userId) {
+  const isFollowing = btn.dataset.following === 'true'
+  btn.disabled = true
+  try {
+    if (isFollowing) {
+      await unfollowLeague({ followerId: userId, leagueId })
+      btn.dataset.following = 'false'
+      btn.textContent = 'עקוב'
+      btn.classList.remove('btn-secondary')
+      btn.classList.add('btn-ghost')
+    } else {
+      await followLeague({ followerId: userId, leagueId })
+      btn.dataset.following = 'true'
+      btn.innerHTML = '✓ עוקב'
+      btn.classList.remove('btn-ghost')
+      btn.classList.add('btn-secondary')
+    }
+  } catch (e) {
+    console.error('follow toggle failed', e)
+  } finally {
+    btn.disabled = false
+  }
+}
 
 function gnAddRipple(e, el) {
   const r = document.createElement('span')
@@ -509,7 +553,7 @@ function gnInitCarousel(uid) {
  * The `variant` param controls which footer actions appear.
  * Everything else in the file is untouched.
  */
-function leagueCardHtml(league, variant = 'follow', currentUserId = null) {
+function leagueCardHtml(league, variant = 'follow', currentUserId = null, members = [], isFollowed = false) {
   const memberCount = league.league_members?.[0]?.count ?? 0
   const gameCount   = league.games?.[0]?.count ?? 0
   const locked      = league.is_locked
@@ -519,33 +563,41 @@ function leagueCardHtml(league, variant = 'follow', currentUserId = null) {
   const bannerImg  = league.cover_url || sportBannerImg(league.sport_type)
   const emoji      = sportEmoji(league.sport_type)
 
-  // Status badge — derive from league data
+  // Status badge
   let statusCls = 'gn-status-active', statusTxt = 'פעילה'
   if (locked) { statusCls = 'gn-status-done'; statusTxt = 'הסתיימה' }
+
+  // Follow button — shown only for non-owners on follow/discover variants
+  const followBtn = (!isOwner && variant !== 'managed') ? `
+    <button
+      class="btn btn-sm ${isFollowed ? 'btn-secondary' : 'btn-ghost'}"
+      data-following="${isFollowed}"
+      onclick="_gnToggleFollow(this,'${league.id}','${currentUserId}')">
+      ${isFollowed ? '✓ עוקב' : 'עקוב'}
+    </button>` : ''
 
   // Footer actions per variant
   const footerActions = variant === 'managed' ? `
     <button class="btn btn-primary btn-sm" onclick="navigate('/league/${league.id}')">כנס</button>
     <button class="btn btn-secondary btn-sm" onclick="navigate('/league/${league.id}/edit')"
       ${locked ? 'disabled title="ליגה נעולה"' : ''}>עריכה</button>
-  ` : variant === 'discover' ? `
+  ` : `
     <button class="btn btn-primary btn-sm" onclick="navigate('/league/${league.id}')">כנס לליגה</button>
-    <button class="btn btn-ghost btn-sm">עקוב</button>
-  ` : /* follow */ `
-    <button class="btn btn-primary btn-sm" onclick="navigate('/league/${league.id}')">כנס לליגה</button>
-    <button class="btn btn-ghost btn-sm">עקוב</button>
+    ${followBtn}
   `
 
-  // Member avatar strip (up to 4)
+  // Real member avatar strip (up to 4) from fetched profiles
+  const shownMembers = members.slice(0, 4)
   const avatarStrip = `
     <div style="display:flex;align-items:center">
       <div class="gn-avatars">
-        ${Array.from({ length: Math.min(memberCount, 4) }, (_, i) =>
-          `<div class="gn-av" style="background:var(--gn-orange);color:#fff;font-size:9px;font-weight:700">
-            ${String.fromCharCode(65 + i)}
-          </div>`
+        ${shownMembers.map(m => m.avatar_url
+          ? `<div class="gn-av"><img src="${m.avatar_url}" alt="${m.display_name || ''}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>`
+          : `<div class="gn-av" style="background:var(--gn-orange);color:#fff;font-size:9px;font-weight:700">
+              ${(m.display_name || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase()}
+            </div>`
         ).join('')}
-        ${memberCount > 4 ? `<div class="gn-av" style="background:#324455;color:#7A95A8">+${memberCount - 4}</div>` : ''}
+        ${memberCount > 4 ? `<div class="gn-av" style="background:#324455;color:#7A95A8;font-size:9px">+${memberCount - 4}</div>` : ''}
       </div>
       <span class="gn-members-txt">${memberCount} שחקנים</span>
     </div>`
@@ -630,11 +682,15 @@ function leagueCardHtml(league, variant = 'follow', currentUserId = null) {
  * Replaces the previous `<div class="grid-cards">` wrapper.
  */
 let _carouselUid = 0
-function carouselSectionHtml(leagues, variant, emptyCtaLabel, emptyCtaHref, currentUserId = null) {
+function carouselSectionHtml(leagues, variant, emptyCtaLabel, emptyCtaHref, currentUserId = null, membersMap = {}, followedIds = new Set()) {
   injectCarouselCss()
   const uid = `c${++_carouselUid}`
 
-  const cards = leagues.map(l => leagueCardHtml(l, variant, currentUserId)).join('')
+  const cards = leagues.map(l => leagueCardHtml(
+    l, variant, currentUserId,
+    membersMap[l.id] || [],
+    followedIds.has(l.id)
+  )).join('')
 
   // Empty CTA card — always appended at end of track
   const ctaCard = `
@@ -739,12 +795,19 @@ export async function render(root) {
   shell.setContent(`<div dir="rtl">${skeletonSection(3)}${skeletonSection(2)}</div>`)
 
   // Fetch all in parallel
-  const [followedLeagues, managedLeagues, discoverLeagues, recentGames] = await Promise.all([
+  const [followedLeagues, managedLeagues, discoverLeagues, recentGames, followedIds] = await Promise.all([
     fetchFollowedLeagues(authUser.id),
     fetchManagedLeagues(authUser.id),
     fetchDiscoverLeagues(authUser.id),
     fetchRecentGames(authUser.id),
+    fetchFollowedLeagueIds(authUser.id),
   ])
+
+  // Fetch member profiles for all leagues (for avatar strips)
+  const allLeagues = [...followedLeagues, ...managedLeagues, ...discoverLeagues]
+  const uniqueIds  = [...new Set(allLeagues.map(l => l.id))]
+  const memberArrays = await Promise.all(uniqueIds.map(id => fetchLeagueMembers(id)))
+  const membersMap = Object.fromEntries(uniqueIds.map((id, i) => [id, memberArrays[i]]))
 
   const isPro = profile?.plan === 'pro'
 
@@ -761,7 +824,7 @@ export async function render(root) {
           <button class="btn btn-ghost btn-sm" onclick="navigate('/discover')">גלה עוד</button>
         </div>
         ${followedLeagues.length
-          ? carouselSectionHtml(followedLeagues, 'follow', 'גלה ליגות', '/discover', authUser.id)
+          ? carouselSectionHtml(followedLeagues, 'follow', 'גלה ליגות', '/discover', authUser.id, membersMap, followedIds)
           : emptyCard(
               `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
               'עדיין לא עוקב אחר ליגות',
@@ -783,7 +846,7 @@ export async function render(root) {
           <button class="btn btn-primary btn-sm" onclick="navigate('/leagues/create')">+ צור ליגה</button>
         </div>
         ${managedLeagues.length
-          ? carouselSectionHtml(managedLeagues, 'managed', 'צור ליגה חדשה', '/leagues/create', authUser.id)
+          ? carouselSectionHtml(managedLeagues, 'managed', 'צור ליגה חדשה', '/leagues/create', authUser.id, membersMap, followedIds)
           : emptyCard(
               `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>`,
               'עדיין לא יצרת ליגה',
@@ -827,7 +890,7 @@ export async function render(root) {
           <span class="chip">🎾 פאדל</span>
         </div>
         ${discoverLeagues.length
-          ? carouselSectionHtml(discoverLeagues, 'discover', 'גלה עוד ליגות', '/discover', authUser.id)
+          ? carouselSectionHtml(discoverLeagues, 'discover', 'גלה עוד ליגות', '/discover', authUser.id, membersMap, followedIds)
           : `<p style="font-size:var(--text-sm);color:var(--text-tertiary);text-align:center;padding:var(--space-6) 0">אין ליגות פומביות כרגע</p>`
         }
       </section>
