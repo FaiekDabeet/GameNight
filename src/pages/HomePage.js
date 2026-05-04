@@ -432,11 +432,10 @@ function gnToggleMenu(e, btn) {
 function gnMenuAction(e, action, leagueId) {
   e.stopPropagation()
   if (_gnOpenMenu) { _gnOpenMenu.classList.remove('gn-open'); _gnOpenMenu = null }
-  if (action === 'edit')    navigate(`/league/${leagueId}/edit`)
-  else if (action === 'update')  navigate(`/league/${leagueId}/update`)
-  else if (action === 'follow')  navigate(`/league/${leagueId}`)   // toggle follow — handled by league page
+  if (action === 'update')  navigate(`/league/${leagueId}/games/add`)  // עדכון טבלה → הוספת משחק
+  else if (action === 'edit')    navigate(`/league/${leagueId}/edit`)   // עדכון פרטי ליגה
   else if (action === 'remove') {
-    if (confirm('להסיר את הליגה?')) alert(`הסרת ליגה ${leagueId}`)
+    if (confirm('למחוק את הליגה לצמיתות?')) navigate(`/league/${leagueId}/edit`)
   }
 }
 
@@ -673,17 +672,19 @@ function leagueCardHtml(league, variant = 'follow', currentUserId = null, member
     <button
       class="btn btn-sm ${isFollowed ? 'btn-secondary' : 'btn-ghost'}"
       data-following="${isFollowed}"
-      onclick="_gnToggleFollow(this,'${league.id}','${currentUserId}')">
+      onclick="event.stopPropagation();_gnToggleFollow(this,'${league.id}','${currentUserId}')">
       ${isFollowed ? '✓ עוקב' : 'עקוב'}
     </button>` : ''
 
-  // Footer actions per variant
+  // Footer actions — both variants navigate to /league/:id
+  // LeaguePage handles permissions internally (owner sees edit controls, viewer sees read-only)
   const footerActions = variant === 'managed' ? `
-    <button class="btn btn-primary btn-sm" onclick="navigate('/league/${league.id}')">כנס</button>
-    <button class="btn btn-secondary btn-sm" onclick="navigate('/league/${league.id}/edit')"
+    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();navigate('/league/${league.id}')">כנס לליגה</button>
+    <button class="btn btn-secondary btn-sm"
+      onclick="event.stopPropagation();navigate('/league/${league.id}/edit')"
       ${locked ? 'disabled title="ליגה נעולה"' : ''}>עריכה</button>
   ` : `
-    <button class="btn btn-primary btn-sm" onclick="navigate('/league/${league.id}')">כנס לליגה</button>
+    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();navigate('/league/${league.id}')">כנס לליגה</button>
     ${followBtn}
   `
 
@@ -704,7 +705,9 @@ function leagueCardHtml(league, variant = 'follow', currentUserId = null, member
     </div>`
 
   return `
-    <div class="gn-lcard" data-league-id="${league.id}">
+    <div class="gn-lcard" data-league-id="${league.id}"
+      onclick="if(!event.target.closest('button')&&!event.target.closest('.gn-menu-wrap'))navigate('/league/${league.id}')"
+      title="כנס לליגה">
 
       ${isOwner ? `
       <!-- 3-dot menu — owners only -->
